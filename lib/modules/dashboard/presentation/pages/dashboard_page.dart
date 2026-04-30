@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../patients/presentation/pages/patient_form_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -91,7 +92,14 @@ class DashboardPage extends StatelessWidget {
             const SizedBox(height: 16),
 
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PatientFormPage(),
+                  ),
+                );
+              },
               icon: const Icon(Icons.add),
               label: const Text('Cadastrar Novo Paciente'),
               style: ElevatedButton.styleFrom(
