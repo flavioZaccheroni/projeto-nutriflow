@@ -27,6 +27,9 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.nutriflow_data/
+nutriflow_data/
+nutriflow_test_data/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/

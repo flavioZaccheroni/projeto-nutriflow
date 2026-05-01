@@ -6,16 +6,11 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('NutriFlow Pro'),
-      ),
+      appBar: AppBar(title: const Text('NutriFlow Pro')),
       body: const Center(
         child: Text(
           'Painel do Nutricionista',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),
     );

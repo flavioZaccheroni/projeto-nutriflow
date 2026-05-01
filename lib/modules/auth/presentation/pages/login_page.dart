@@ -25,10 +25,7 @@ class LoginPage extends StatelessWidget {
 
                 const Text(
                   'NutriFlow',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 8),
@@ -36,10 +33,7 @@ class LoginPage extends StatelessWidget {
                 const Text(
                   'Gestão inteligente para nutricionistas',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.black54, fontSize: 16),
                 ),
 
                 const SizedBox(height: 40),
@@ -87,10 +81,7 @@ class LoginPage extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const Text(
-                      'Entrar',
-                      style: TextStyle(fontSize: 18),
-                    ),
+                    child: const Text('Entrar', style: TextStyle(fontSize: 18)),
                   ),
                 ),
 
@@ -100,9 +91,7 @@ class LoginPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const DashboardPage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const DashboardPage()),
                     );
                   },
                   child: const Text('Criar conta'),

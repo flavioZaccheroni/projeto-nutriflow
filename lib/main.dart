@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'core/database/local_database.dart';
+import 'core/theme/app_theme.dart';
 import 'modules/auth/presentation/pages/login_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LocalDatabase.init();
   runApp(const NutriFlowApp());
 }
 
@@ -13,6 +17,7 @@ class NutriFlowApp extends StatelessWidget {
     return MaterialApp(
       title: 'NutriFlow',
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       home: const LoginPage(),
     );
   }
