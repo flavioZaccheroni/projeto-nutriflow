@@ -3,16 +3,28 @@ import 'package:flutter/material.dart';
 import '../../../../data/models/meal_plan_model.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/models/history_event_model.dart';
+import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/history_repository.dart';
 import '../../../../data/repositories/meal_plan_repository.dart';
 import '../../../../data/repositories/patient_repository.dart';
+import '../../../../data/services/cloud_sync_service.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 import '../../../history/presentation/pages/history_page.dart';
 import '../../../meal_plans/presentation/pages/meal_plan_patient_select_page.dart';
 import '../../../patients/presentation/pages/patient_form_page.dart';
 import '../../../patients/presentation/pages/patient_list_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final _authRepository = AuthRepository();
+  final _syncService = CloudSyncService();
+  bool _isSyncing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +34,18 @@ class DashboardPage extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.white,
         title: const Text('Dashboard', style: TextStyle(color: Colors.black)),
-        actions: const [
-          Padding(
+        actions: [
+          IconButton(
+            tooltip: 'Sincronizar nuvem',
+            onPressed: _isSyncing ? null : _syncCloud,
+            icon: Icon(_isSyncing ? Icons.sync : Icons.cloud_sync_outlined),
+          ),
+          IconButton(
+            tooltip: 'Sair',
+            onPressed: _signOut,
+            icon: const Icon(Icons.logout),
+          ),
+          const Padding(
             padding: EdgeInsets.only(right: 16),
             child: CircleAvatar(
               backgroundColor: Colors.green,
@@ -154,6 +176,45 @@ class DashboardPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _syncCloud() async {
+    if (!_syncService.canSync) {
+      _showMessage('Entre com Supabase configurado para sincronizar.');
+      return;
+    }
+
+    setState(() => _isSyncing = true);
+
+    try {
+      final result = await _syncService.syncAll();
+      _showMessage('Sincronizacao concluida (${result.total} registros).');
+    } catch (error) {
+      _showMessage('Falha ao sincronizar: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+      }
+    }
+  }
+
+  Future<void> _signOut() async {
+    await _authRepository.signOut();
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+    );
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

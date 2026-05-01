@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/cloud/supabase_service.dart';
 import 'core/database/local_database.dart';
 import 'core/theme/app_theme.dart';
 import 'modules/auth/presentation/pages/login_page.dart';
@@ -6,6 +7,7 @@ import 'modules/auth/presentation/pages/login_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalDatabase.init();
+  await SupabaseService.init();
   runApp(const NutriFlowApp());
 }
 
