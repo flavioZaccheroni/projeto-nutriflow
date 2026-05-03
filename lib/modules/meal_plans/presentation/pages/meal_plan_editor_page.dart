@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/meal_plan_model.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/repositories/meal_plan_repository.dart';
@@ -77,56 +78,43 @@ class _MealPlanEditorPageState extends State<MealPlanEditorPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _PatientHeader(patient: widget.patient),
-                const SizedBox(height: 16),
-                for (final meal in _meals) ...[
-                  _MealEditorCard(
-                    meal: meal,
-                    onRemove: _meals.length == 1
-                        ? null
-                        : () => _removeMeal(meal),
-                    onAddFood: () => _addFood(meal),
-                    onRemoveFood: (food) => _removeFood(meal, food),
+          : ResponsiveCenter(
+              maxWidth: Responsive.contentMaxWidth(context),
+              child: ListView(
+                padding: Responsive.pagePadding(context),
+                children: [
+                  _PatientHeader(patient: widget.patient),
+                  const SizedBox(height: 16),
+                  for (final meal in _meals) ...[
+                    _MealEditorCard(
+                      meal: meal,
+                      onRemove: _meals.length == 1
+                          ? null
+                          : () => _removeMeal(meal),
+                      onAddFood: () => _addFood(meal),
+                      onRemoveFood: (food) => _removeFood(meal, food),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed: _addMeal,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Adicionar refeicao'),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 88),
                 ],
-                OutlinedButton.icon(
-                  onPressed: _addMeal,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Adicionar refeicao'),
-                ),
-                const SizedBox(height: 88),
-              ],
+              ),
             ),
       bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton.icon(
-              onPressed: _isSaving ? null : _savePlan,
-              icon: const Icon(Icons.save_outlined),
-              label: Text(_isSaving ? 'Salvando...' : 'Salvar plano alimentar'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                backgroundColor: Colors.green,
-              ),
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: _isSaving || _isGeneratingPdf ? null : _generatePdf,
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: Text(
-                _isGeneratingPdf ? 'Gerando PDF...' : 'Gerar PDF para paciente',
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
-            ),
-          ],
+        minimum: Responsive.pagePadding(context),
+        child: ResponsiveCenter(
+          maxWidth: Responsive.contentMaxWidth(context),
+          child: _BottomActions(
+            isSaving: _isSaving,
+            isGeneratingPdf: _isGeneratingPdf,
+            onSave: _savePlan,
+            onGeneratePdf: _generatePdf,
+          ),
         ),
       ),
     );
@@ -238,6 +226,56 @@ class _MealPlanEditorPageState extends State<MealPlanEditorPage> {
   }
 }
 
+class _BottomActions extends StatelessWidget {
+  final bool isSaving;
+  final bool isGeneratingPdf;
+  final VoidCallback onSave;
+  final VoidCallback onGeneratePdf;
+
+  const _BottomActions({
+    required this.isSaving,
+    required this.isGeneratingPdf,
+    required this.onSave,
+    required this.onGeneratePdf,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final saveButton = ElevatedButton.icon(
+      onPressed: isSaving ? null : onSave,
+      icon: const Icon(Icons.save_outlined),
+      label: Text(isSaving ? 'Salvando...' : 'Salvar plano alimentar'),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        backgroundColor: Colors.green,
+      ),
+    );
+    final pdfButton = OutlinedButton.icon(
+      onPressed: isSaving || isGeneratingPdf ? null : onGeneratePdf,
+      icon: const Icon(Icons.picture_as_pdf_outlined),
+      label: Text(
+        isGeneratingPdf ? 'Gerando PDF...' : 'Gerar PDF para paciente',
+      ),
+      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+    );
+
+    if (Responsive.isMobile(context)) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [saveButton, const SizedBox(height: 10), pdfButton],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: saveButton),
+        const SizedBox(width: 12),
+        Expanded(child: pdfButton),
+      ],
+    );
+  }
+}
+
 class _PatientHeader extends StatelessWidget {
   final PatientModel patient;
 
@@ -315,9 +353,9 @@ class _MealEditorCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
+          _EditorRow(
             children: [
-              Expanded(
+              _ResponsiveExpanded(
                 flex: 3,
                 child: TextField(
                   controller: meal.nameController,
@@ -327,8 +365,7 @@ class _MealEditorCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
+              _ResponsiveExpanded(
                 flex: 2,
                 child: TextField(
                   controller: meal.timeController,
@@ -338,18 +375,18 @@ class _MealEditorCard extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
+              _IconAction(
                 tooltip: 'Remover refeicao',
                 onPressed: onRemove,
-                icon: const Icon(Icons.delete_outline),
+                icon: Icons.delete_outline,
               ),
             ],
           ),
           const SizedBox(height: 12),
           for (final food in meal.foods) ...[
-            Row(
+            _EditorRow(
               children: [
-                Expanded(
+                _ResponsiveExpanded(
                   flex: 3,
                   child: TextField(
                     controller: food.nameController,
@@ -359,18 +396,17 @@ class _MealEditorCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+                _ResponsiveExpanded(
                   flex: 2,
                   child: TextField(
                     controller: food.quantityController,
                     decoration: const InputDecoration(labelText: 'Quantidade'),
                   ),
                 ),
-                IconButton(
+                _IconAction(
                   tooltip: 'Remover alimento',
                   onPressed: () => onRemoveFood(food),
-                  icon: const Icon(Icons.close),
+                  icon: Icons.close,
                 ),
               ],
             ),
@@ -387,6 +423,78 @@ class _MealEditorCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _EditorRow extends StatelessWidget {
+  final List<Widget> children;
+
+  const _EditorRow({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    if (Responsive.isMobile(context)) {
+      return Column(
+        children: [
+          for (final child in children) ...[
+            child,
+            if (child != children.last) const SizedBox(height: 10),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        for (final child in children) ...[
+          child,
+          if (child != children.last) const SizedBox(width: 12),
+        ],
+      ],
+    );
+  }
+}
+
+class _ResponsiveExpanded extends StatelessWidget {
+  final int flex;
+  final Widget child;
+
+  const _ResponsiveExpanded({required this.flex, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (Responsive.isMobile(context)) {
+      return child;
+    }
+
+    return Expanded(flex: flex, child: child);
+  }
+}
+
+class _IconAction extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final IconData icon;
+
+  const _IconAction({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final button = IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+    );
+
+    if (Responsive.isMobile(context)) {
+      return Align(alignment: Alignment.centerRight, child: button);
+    }
+
+    return SizedBox(width: 48, child: button);
   }
 }
 

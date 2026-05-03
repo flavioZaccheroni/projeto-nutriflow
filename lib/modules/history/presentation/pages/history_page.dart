@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/history_event_model.dart';
 import '../../../../data/repositories/history_repository.dart';
 
@@ -26,30 +27,33 @@ class HistoryPage extends StatelessWidget {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: events.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final event = events[index];
+          return ResponsiveCenter(
+            maxWidth: Responsive.contentMaxWidth(context),
+            child: ListView.separated(
+              padding: Responsive.pagePadding(context),
+              itemCount: events.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final event = events[index];
 
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.green.shade100,
-                    foregroundColor: Colors.green.shade800,
-                    child: Icon(_iconFor(event.type)),
+                return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: Colors.grey.shade200),
                   ),
-                  title: Text(event.description),
-                  subtitle: Text(_formatDateTime(event.createdAt)),
-                ),
-              );
-            },
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.green.shade100,
+                      foregroundColor: Colors.green.shade800,
+                      child: Icon(_iconFor(event.type)),
+                    ),
+                    title: Text(event.description),
+                    subtitle: Text(_formatDateTime(event.createdAt)),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

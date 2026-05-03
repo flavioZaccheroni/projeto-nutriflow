@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/repositories/patient_repository.dart';
 import 'patient_form_page.dart';
@@ -27,52 +28,65 @@ class _PatientListPageState extends State<PatientListPage> {
             return const _EmptyPatientsState();
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: patients.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final patient = patients[index];
+          return ResponsiveCenter(
+            maxWidth: Responsive.contentMaxWidth(context),
+            child: GridView.builder(
+              padding: Responsive.pagePadding(context),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: Responsive.listColumns(context),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent:
+                    patients.any((patient) => patient.observations.isNotEmpty)
+                    ? 132
+                    : 108,
+              ),
+              itemCount: patients.length,
+              itemBuilder: (context, index) {
+                final patient = patients[index];
 
-              return Dismissible(
-                key: ValueKey(patient.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade600,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                onDismissed: (_) => _repository.delete(patient.id),
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.green.shade100,
-                      foregroundColor: Colors.green.shade800,
-                      child: Text(patient.name.characters.first.toUpperCase()),
+                return Dismissible(
+                  key: ValueKey(patient.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade600,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    title: Text(patient.name),
-                    subtitle: Text(
-                      '${patient.goal}\n'
-                      '${patient.age} anos | ${patient.weight.toStringAsFixed(1)} kg | '
-                      'IMC ${patient.imc.toStringAsFixed(1)}'
-                      '${patient.observations.isEmpty ? '' : '\nObs: ${patient.observations}'}',
-                    ),
-                    isThreeLine: patient.observations.isNotEmpty,
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _openForm(patient),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
-                ),
-              );
-            },
+                  onDismissed: (_) => _repository.delete(patient.id),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.green.shade100,
+                        foregroundColor: Colors.green.shade800,
+                        child: Text(
+                          patient.name.characters.first.toUpperCase(),
+                        ),
+                      ),
+                      title: Text(patient.name),
+                      subtitle: Text(
+                        '${patient.goal}\n'
+                        '${patient.age} anos | ${patient.weight.toStringAsFixed(1)} kg | '
+                        'IMC ${patient.imc.toStringAsFixed(1)}'
+                        '${patient.observations.isEmpty ? '' : '\nObs: ${patient.observations}'}',
+                      ),
+                      isThreeLine: patient.observations.isNotEmpty,
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _openForm(patient),
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

@@ -1,16 +1,49 @@
-# nutriflow_pro
+# NutriFlow Pro
 
-A new Flutter project.
+Aplicativo Flutter para nutricionistas com cadastro de pacientes, planos alimentares, PDF profissional, SQLite local e sincronizacao opcional com Supabase.
 
-## Getting Started
+## Rodar localmente
 
-This project is a starting point for a Flutter application.
+```powershell
+flutter pub get
+flutter run -d windows
+```
 
-A few resources to get you started if this is your first Flutter project:
+Sem Supabase configurado, o app roda em modo local e salva tudo no SQLite em `nutriflow_data/nutriflow.db`.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Configurar Supabase
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Crie um projeto no Supabase.
+2. Abra o SQL Editor do Supabase.
+3. Cole e execute o conteudo de `supabase_schema.sql`.
+4. No Supabase, copie:
+   - Project URL
+   - anon public key
+
+No Windows, rode o app com:
+
+```powershell
+flutter run -d windows `
+  --dart-define=SUPABASE_URL=https://SEU-PROJETO.supabase.co `
+  --dart-define=SUPABASE_ANON_KEY=SUA_ANON_KEY
+```
+
+Depois entre com e-mail e senha na tela inicial. O app cria conta, autentica e sincroniza pacientes, planos alimentares, refeicoes, alimentos e historico.
+
+## Build Windows com Supabase
+
+```powershell
+flutter build windows `
+  --dart-define=SUPABASE_URL=https://SEU-PROJETO.supabase.co `
+  --dart-define=SUPABASE_ANON_KEY=SUA_ANON_KEY
+```
+
+O executavel sera gerado em `build/windows/x64/runner/Release/nutriflow_pro.exe`.
+
+## Validacao
+
+```powershell
+dart analyze
+flutter test
+flutter build windows
+```

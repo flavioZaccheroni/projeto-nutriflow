@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/meal_plan_model.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/models/history_event_model.dart';
+import '../../../../data/repositories/food_repository.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/history_repository.dart';
 import '../../../../data/repositories/meal_plan_repository.dart';
 import '../../../../data/repositories/patient_repository.dart';
 import '../../../../data/services/cloud_sync_service.dart';
 import '../../../auth/presentation/pages/login_page.dart';
+import '../../../foods/presentation/pages/food_database_page.dart';
 import '../../../history/presentation/pages/history_page.dart';
 import '../../../meal_plans/presentation/pages/meal_plan_patient_select_page.dart';
 import '../../../patients/presentation/pages/patient_form_page.dart';
@@ -54,9 +57,10 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: ResponsiveCenter(
+        maxWidth: Responsive.contentMaxWidth(context),
         child: ListView(
+          padding: Responsive.pagePadding(context),
           children: [
             const Text(
               'Bem-vindo ao NutriFlow',
@@ -69,11 +73,12 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 24),
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: Responsive.dashboardColumns(context),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
+              childAspectRatio: Responsive.isMobile(context) ? 2.6 : 1.45,
               children: [
                 StreamBuilder<List<PatientModel>>(
                   stream: PatientRepository().watchAll(),
@@ -93,10 +98,18 @@ class _DashboardPageState extends State<DashboardPage> {
                     );
                   },
                 ),
-                const DashboardCard(
-                  title: 'Consultas',
-                  value: '18',
-                  icon: Icons.calendar_today,
+                DashboardCard(
+                  title: 'Alimentos',
+                  value: '${FoodRepository().search('').length}',
+                  icon: Icons.eco_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FoodDatabasePage(),
+                      ),
+                    );
+                  },
                 ),
                 StreamBuilder<List<MealPlanModel>>(
                   stream: MealPlanRepository().watchAll(),
@@ -142,23 +155,14 @@ class _DashboardPageState extends State<DashboardPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
+            _ShortcutActions(
+              onNewPatient: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const PatientFormPage()),
                 );
               },
-              icon: const Icon(Icons.add),
-              label: const Text('Cadastrar paciente'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                backgroundColor: Colors.green,
-              ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {
+              onMealPlan: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -166,11 +170,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.restaurant_menu),
-              label: const Text('Montar plano alimentar'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
+              onFoods: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FoodDatabasePage()),
+                );
+              },
             ),
           ],
         ),
@@ -218,6 +223,66 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+class _ShortcutActions extends StatelessWidget {
+  final VoidCallback onNewPatient;
+  final VoidCallback onMealPlan;
+  final VoidCallback onFoods;
+
+  const _ShortcutActions({
+    required this.onNewPatient,
+    required this.onMealPlan,
+    required this.onFoods,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final buttons = [
+      ElevatedButton.icon(
+        onPressed: onNewPatient,
+        icon: const Icon(Icons.add),
+        label: const Text('Cadastrar paciente'),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size.fromHeight(52),
+          backgroundColor: Colors.green,
+        ),
+      ),
+      OutlinedButton.icon(
+        onPressed: onMealPlan,
+        icon: const Icon(Icons.restaurant_menu),
+        label: const Text('Montar plano alimentar'),
+        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+      ),
+      OutlinedButton.icon(
+        onPressed: onFoods,
+        icon: const Icon(Icons.eco_outlined),
+        label: const Text('Banco de alimentos'),
+        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+      ),
+    ];
+
+    if (Responsive.isMobile(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final button in buttons) ...[
+            button,
+            if (button != buttons.last) const SizedBox(height: 12),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        for (final button in buttons) ...[
+          Expanded(child: button),
+          if (button != buttons.last) const SizedBox(width: 12),
+        ],
+      ],
+    );
+  }
+}
+
 class DashboardCard extends StatelessWidget {
   final String title;
   final String value;
@@ -246,7 +311,8 @@ class DashboardCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: Colors.green, size: 32),
-            const Spacer(),
+            if (!Responsive.isMobile(context)) const Spacer(),
+            if (Responsive.isMobile(context)) const SizedBox(height: 12),
             Text(
               value,
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),

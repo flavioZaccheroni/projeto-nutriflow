@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/repositories/patient_repository.dart';
 import 'meal_plan_editor_page.dart';
@@ -22,44 +23,55 @@ class MealPlanPatientSelectPage extends StatelessWidget {
             return const _NoPatientsState();
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: patients.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final patient = patients[index];
+          return ResponsiveCenter(
+            maxWidth: Responsive.contentMaxWidth(context),
+            child: GridView.builder(
+              padding: Responsive.pagePadding(context),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: Responsive.listColumns(context),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent:
+                    patients.any((patient) => patient.observations.isNotEmpty)
+                    ? 120
+                    : 96,
+              ),
+              itemCount: patients.length,
+              itemBuilder: (context, index) {
+                final patient = patients[index];
 
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.green.shade100,
-                    foregroundColor: Colors.green.shade800,
-                    child: Text(patient.name.characters.first.toUpperCase()),
+                return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: Colors.grey.shade200),
                   ),
-                  title: Text(patient.name),
-                  subtitle: Text(
-                    patient.observations.isEmpty
-                        ? patient.goal
-                        : '${patient.goal}\nObs: ${patient.observations}',
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.green.shade100,
+                      foregroundColor: Colors.green.shade800,
+                      child: Text(patient.name.characters.first.toUpperCase()),
+                    ),
+                    title: Text(patient.name),
+                    subtitle: Text(
+                      patient.observations.isEmpty
+                          ? patient.goal
+                          : '${patient.goal}\nObs: ${patient.observations}',
+                    ),
+                    isThreeLine: patient.observations.isNotEmpty,
+                    trailing: const Icon(Icons.restaurant_menu),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MealPlanEditorPage(patient: patient),
+                        ),
+                      );
+                    },
                   ),
-                  isThreeLine: patient.observations.isNotEmpty,
-                  trailing: const Icon(Icons.restaurant_menu),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MealPlanEditorPage(patient: patient),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/repositories/patient_repository.dart';
 
@@ -66,96 +67,101 @@ class _PatientFormPageState extends State<PatientFormPage> {
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nome',
-                prefixIcon: Icon(Icons.person_outline),
+        child: ResponsiveCenter(
+          maxWidth: Responsive.formMaxWidth(context),
+          child: ListView(
+            padding: Responsive.pagePadding(context),
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nome',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: _required,
               ),
-              textInputAction: TextInputAction.next,
-              validator: _required,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _ageController,
-              decoration: const InputDecoration(
-                labelText: 'Idade',
-                prefixIcon: Icon(Icons.cake_outlined),
+              const SizedBox(height: 16),
+              _ResponsiveFieldRow(
+                children: [
+                  TextFormField(
+                    controller: _ageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Idade',
+                      prefixIcon: Icon(Icons.cake_outlined),
+                    ),
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    validator: _positiveInt,
+                  ),
+                  TextFormField(
+                    controller: _weightController,
+                    decoration: const InputDecoration(
+                      labelText: 'Peso (kg)',
+                      prefixIcon: Icon(Icons.monitor_weight_outlined),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    textInputAction: TextInputAction.next,
+                    validator: _positiveDouble,
+                  ),
+                  TextFormField(
+                    controller: _heightController,
+                    decoration: const InputDecoration(
+                      labelText: 'Altura (cm)',
+                      prefixIcon: Icon(Icons.height),
+                    ),
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    validator: _positiveDouble,
+                  ),
+                ],
               ),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.next,
-              validator: _positiveInt,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _weightController,
-              decoration: const InputDecoration(
-                labelText: 'Peso (kg)',
-                prefixIcon: Icon(Icons.monitor_weight_outlined),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _goalController,
+                decoration: const InputDecoration(
+                  labelText: 'Objetivo',
+                  prefixIcon: Icon(Icons.flag_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: _required,
               ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _observationsController,
+                decoration: const InputDecoration(
+                  labelText: 'Observacoes',
+                  prefixIcon: Icon(Icons.notes_outlined),
+                  alignLabelWithHint: true,
+                ),
+                minLines: 3,
+                maxLines: 5,
+                textInputAction: TextInputAction.newline,
               ),
-              textInputAction: TextInputAction.next,
-              validator: _positiveDouble,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _heightController,
-              decoration: const InputDecoration(
-                labelText: 'Altura (cm)',
-                prefixIcon: Icon(Icons.height),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _nextVisitController,
+                decoration: const InputDecoration(
+                  labelText: 'Proxima consulta',
+                  prefixIcon: Icon(Icons.event_outlined),
+                ),
+                textInputAction: TextInputAction.done,
+                validator: _required,
+                onFieldSubmitted: (_) => _save(),
               ),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.next,
-              validator: _positiveDouble,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _goalController,
-              decoration: const InputDecoration(
-                labelText: 'Objetivo',
-                prefixIcon: Icon(Icons.flag_outlined),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _save,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Salvar paciente'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
               ),
-              textInputAction: TextInputAction.next,
-              validator: _required,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _observationsController,
-              decoration: const InputDecoration(
-                labelText: 'Observacoes',
-                prefixIcon: Icon(Icons.notes_outlined),
-                alignLabelWithHint: true,
-              ),
-              minLines: 3,
-              maxLines: 5,
-              textInputAction: TextInputAction.newline,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nextVisitController,
-              decoration: const InputDecoration(
-                labelText: 'Proxima consulta',
-                prefixIcon: Icon(Icons.event_outlined),
-              ),
-              textInputAction: TextInputAction.done,
-              validator: _required,
-              onFieldSubmitted: (_) => _save(),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.save_outlined),
-              label: const Text('Salvar paciente'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -215,5 +221,34 @@ class _PatientFormPageState extends State<PatientFormPage> {
 
   double? _tryParseDouble(String? value) {
     return double.tryParse((value ?? '').trim().replaceAll(',', '.'));
+  }
+}
+
+class _ResponsiveFieldRow extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ResponsiveFieldRow({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    if (Responsive.isMobile(context)) {
+      return Column(
+        children: [
+          for (final child in children) ...[
+            child,
+            if (child != children.last) const SizedBox(height: 16),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        for (final child in children) ...[
+          Expanded(child: child),
+          if (child != children.last) const SizedBox(width: 16),
+        ],
+      ],
+    );
   }
 }
