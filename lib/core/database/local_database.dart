@@ -58,7 +58,7 @@ class LocalDatabase {
 
     return openDatabase(
       databasePath,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -144,6 +144,7 @@ class LocalDatabase {
         await db.execute(
           'CREATE INDEX idx_history_patient_id ON history_events(patient_id)',
         );
+        await _createClinicalTables(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -151,7 +152,126 @@ class LocalDatabase {
             "ALTER TABLE patients ADD COLUMN observations TEXT NOT NULL DEFAULT ''",
           );
         }
+        if (oldVersion < 3) {
+          await _createClinicalTables(db);
+        }
       },
+    );
+  }
+
+  static Future<void> _createClinicalTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS clinical_records (
+        patient_id TEXT PRIMARY KEY,
+        sus_number TEXT NOT NULL DEFAULT '',
+        insurance TEXT NOT NULL DEFAULT '',
+        hospital_record TEXT NOT NULL DEFAULT '',
+        clinical_history TEXT NOT NULL DEFAULT '',
+        diagnoses TEXT NOT NULL DEFAULT '',
+        medications TEXT NOT NULL DEFAULT '',
+        allergies TEXT NOT NULL DEFAULT '',
+        food_social_history TEXT NOT NULL DEFAULT '',
+        lifestyle_habits TEXT NOT NULL DEFAULT '',
+        pep_integration_notes TEXT NOT NULL DEFAULT '',
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (patient_id)
+          REFERENCES patients (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS anthropometric_assessments (
+        id TEXT PRIMARY KEY,
+        patient_id TEXT NOT NULL,
+        weight REAL NOT NULL,
+        height REAL NOT NULL,
+        bmi REAL NOT NULL,
+        arm_circumference REAL,
+        calf_circumference REAL,
+        waist_circumference REAL,
+        skinfolds TEXT NOT NULL DEFAULT '',
+        bioimpedance TEXT NOT NULL DEFAULT '',
+        body_composition TEXT NOT NULL DEFAULT '',
+        sarcopenia_risk TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (patient_id)
+          REFERENCES patients (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS lab_results (
+        id TEXT PRIMARY KEY,
+        patient_id TEXT NOT NULL,
+        albumin REAL,
+        pcr REAL,
+        urea REAL,
+        creatinine REAL,
+        sodium REAL,
+        potassium REAL,
+        phosphorus REAL,
+        hemoglobin REAL,
+        glucose REAL,
+        hba1c REAL,
+        interpretation TEXT NOT NULL DEFAULT '',
+        alerts TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (patient_id)
+          REFERENCES patients (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS nutrition_calculations (
+        id TEXT PRIMARY KEY,
+        patient_id TEXT NOT NULL,
+        formula TEXT NOT NULL,
+        energy_need REAL NOT NULL,
+        stress_factor REAL NOT NULL,
+        protein_gkg REAL NOT NULL,
+        protein_total REAL NOT NULL,
+        carbs_g REAL NOT NULL,
+        lipids_g REAL NOT NULL,
+        meal_distribution TEXT NOT NULL DEFAULT '',
+        micronutrients TEXT NOT NULL DEFAULT '',
+        clinical_adjustments TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (patient_id)
+          REFERENCES patients (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS screening_results (
+        id TEXT PRIMARY KEY,
+        patient_id TEXT NOT NULL,
+        protocol TEXT NOT NULL,
+        score REAL NOT NULL,
+        classification TEXT NOT NULL,
+        alerts TEXT NOT NULL DEFAULT '',
+        priority TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (patient_id)
+          REFERENCES patients (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_anthropometry_patient ON anthropometric_assessments(patient_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_labs_patient ON lab_results(patient_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_nutrition_patient ON nutrition_calculations(patient_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_screening_patient ON screening_results(patient_id)',
     );
   }
 }

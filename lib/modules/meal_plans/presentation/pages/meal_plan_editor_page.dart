@@ -106,9 +106,9 @@ class _MealPlanEditorPageState extends State<MealPlanEditorPage> {
               ),
             ),
       bottomNavigationBar: SafeArea(
-        minimum: Responsive.pagePadding(context),
-        child: ResponsiveCenter(
-          maxWidth: Responsive.contentMaxWidth(context),
+        minimum: EdgeInsets.zero,
+        child: Padding(
+          padding: Responsive.pagePadding(context),
           child: _BottomActions(
             isSaving: _isSaving,
             isGeneratingPdf: _isGeneratingPdf,
@@ -246,7 +246,7 @@ class _BottomActions extends StatelessWidget {
       icon: const Icon(Icons.save_outlined),
       label: Text(isSaving ? 'Salvando...' : 'Salvar plano alimentar'),
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
+        fixedSize: const Size(240, 48),
         backgroundColor: Colors.green,
       ),
     );
@@ -256,7 +256,7 @@ class _BottomActions extends StatelessWidget {
       label: Text(
         isGeneratingPdf ? 'Gerando PDF...' : 'Gerar PDF para paciente',
       ),
-      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+      style: OutlinedButton.styleFrom(fixedSize: const Size(260, 48)),
     );
 
     if (Responsive.isMobile(context)) {
@@ -266,12 +266,12 @@ class _BottomActions extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: [
-        Expanded(child: saveButton),
-        const SizedBox(width: 12),
-        Expanded(child: pdfButton),
-      ],
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [saveButton, const SizedBox(width: 12), pdfButton],
+      ),
     );
   }
 }

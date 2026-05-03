@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nutriflow_pro/core/database/local_database.dart';
 import 'package:nutriflow_pro/data/models/meal_plan_model.dart';
 import 'package:nutriflow_pro/data/models/patient_model.dart';
+import 'package:nutriflow_pro/data/repositories/clinical_repository.dart';
 import 'package:nutriflow_pro/data/repositories/history_repository.dart';
 import 'package:nutriflow_pro/data/repositories/meal_plan_repository.dart';
 import 'package:nutriflow_pro/data/repositories/patient_repository.dart';
@@ -81,5 +82,68 @@ void main() {
     expect(savedPlan.meals.first.foods.first.name, 'Ovos');
     expect(history.map((event) => event.type), contains('patient_created'));
     expect(history.map((event) => event.type), contains('meal_plan_created'));
+  });
+
+  test('persists clinical records and automatic screening alerts', () async {
+    final patientRepository = PatientRepository();
+    final clinicalRepository = ClinicalRepository();
+
+    final patient = await patientRepository.save(
+      PatientModel(
+        id: '',
+        name: 'Carlos Lima',
+        age: 58,
+        weight: 82,
+        height: 172,
+        goal: 'Controle glicemico',
+        observations: 'Paciente renal em acompanhamento.',
+        nextVisit: '12/05/2026',
+        createdAt: DateTime(2026, 5),
+      ),
+    );
+
+    await clinicalRepository.saveClinicalRecord(
+      patientId: patient.id,
+      data: const {
+        'sus_number': '123456789012345',
+        'insurance': 'Convenio teste',
+        'hospital_record': 'PEP-001',
+        'clinical_history': 'Diabetes tipo 2 e DRC.',
+        'diagnoses': 'CID-10 E11, N18',
+        'medications': 'Metformina',
+        'allergies': 'Lactose',
+        'food_social_history': 'Baixa ingestao proteica.',
+        'lifestyle_habits': 'Sono irregular, sedentario.',
+        'pep_integration_notes': 'Aguardando integracao PEP.',
+      },
+    );
+
+    await clinicalRepository.saveLabs(
+      patientId: patient.id,
+      data: const {
+        'potassium': 5.8,
+        'creatinine': 1.6,
+        'glucose': 190,
+        'interpretation': 'Ajustar conduta renal e glicemica.',
+      },
+    );
+
+    await clinicalRepository.saveScreening(
+      patientId: patient.id,
+      data: const {'protocol': 'NRS-2002', 'score': 4},
+    );
+
+    final clinical = await clinicalRepository.getClinicalRecord(patient.id);
+    final labs = await clinicalRepository.getLatest('lab_results', patient.id);
+    final screening = await clinicalRepository.getLatest(
+      'screening_results',
+      patient.id,
+    );
+
+    expect(clinical['sus_number'], '123456789012345');
+    expect(labs['alerts'], contains('hipercalemia'));
+    expect(labs['alerts'], contains('risco renal'));
+    expect(screening['classification'], 'Risco nutricional elevado');
+    expect(screening['priority'], 'Alta');
   });
 }

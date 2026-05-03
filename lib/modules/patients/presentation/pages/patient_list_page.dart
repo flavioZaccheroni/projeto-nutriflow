@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/layout/responsive.dart';
 import '../../../../data/models/patient_model.dart';
 import '../../../../data/repositories/patient_repository.dart';
+import '../../../clinical/presentation/pages/clinical_record_page.dart';
 import 'patient_form_page.dart';
 
 class PatientListPage extends StatefulWidget {
@@ -80,8 +81,12 @@ class _PatientListPageState extends State<PatientListPage> {
                         '${patient.observations.isEmpty ? '' : '\nObs: ${patient.observations}'}',
                       ),
                       isThreeLine: patient.observations.isNotEmpty,
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _openForm(patient),
+                      trailing: IconButton(
+                        tooltip: 'Editar paciente',
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () => _openForm(patient),
+                      ),
+                      onTap: () => _openClinicalRecord(patient),
                     ),
                   ),
                 );
@@ -101,6 +106,13 @@ class _PatientListPageState extends State<PatientListPage> {
     return Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => PatientFormPage(patient: patient)),
+    );
+  }
+
+  Future<void> _openClinicalRecord(PatientModel patient) {
+    return Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ClinicalRecordPage(patient: patient)),
     );
   }
 }
