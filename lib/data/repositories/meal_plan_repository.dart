@@ -43,9 +43,7 @@ class MealPlanRepository {
   Future<MealPlanModel> save(MealPlanModel plan) async {
     final db = await LocalDatabase.database;
     final isNew = plan.id.isEmpty;
-    final id = isNew
-        ? DateTime.now().microsecondsSinceEpoch.toString()
-        : plan.id;
+    final id = isNew ? LocalDatabase.newId() : plan.id;
     final savedPlan = plan.copyWith(id: id, updatedAt: DateTime.now());
 
     await db.transaction((transaction) async {

@@ -26,9 +26,17 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
   final _labs = <String, TextEditingController>{};
   final _nutrition = <String, TextEditingController>{};
   final _screening = <String, TextEditingController>{};
+  final _prescription = <String, TextEditingController>{};
+  final _evolution = <String, TextEditingController>{};
+  final _alerts = <String, TextEditingController>{};
+  final _reports = <String, TextEditingController>{};
+  final _patientExperience = <String, TextEditingController>{};
+  final _security = <String, TextEditingController>{};
+  final _integrations = <String, TextEditingController>{};
 
   String _formula = 'Mifflin-St Jeor';
   String _protocol = 'NRS-2002';
+  String _evolutionModel = 'SOAP';
   String _message = '';
   bool _loading = true;
 
@@ -47,6 +55,13 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
       ..._labs.values,
       ..._nutrition.values,
       ..._screening.values,
+      ..._prescription.values,
+      ..._evolution.values,
+      ..._alerts.values,
+      ..._reports.values,
+      ..._patientExperience.values,
+      ..._security.values,
+      ..._integrations.values,
     ]) {
       controller.dispose();
     }
@@ -56,7 +71,7 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 12,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Prontuario - ${widget.patient.name}'),
@@ -74,6 +89,16 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
                 icon: Icon(Icons.assignment_turned_in_outlined),
                 text: 'Triagem',
               ),
+              Tab(
+                icon: Icon(Icons.restaurant_menu_outlined),
+                text: 'Prescricao',
+              ),
+              Tab(icon: Icon(Icons.timeline_outlined), text: 'Evolucao'),
+              Tab(icon: Icon(Icons.warning_amber_outlined), text: 'Alertas'),
+              Tab(icon: Icon(Icons.query_stats_outlined), text: 'Indicadores'),
+              Tab(icon: Icon(Icons.phone_iphone_outlined), text: 'Paciente'),
+              Tab(icon: Icon(Icons.verified_user_outlined), text: 'Seguranca'),
+              Tab(icon: Icon(Icons.sync_alt_outlined), text: 'Integracoes'),
             ],
           ),
         ),
@@ -102,6 +127,13 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
                         _labsTab(),
                         _nutritionTab(),
                         _screeningTab(),
+                        _prescriptionTab(),
+                        _evolutionTab(),
+                        _alertsTab(),
+                        _reportsTab(),
+                        _patientExperienceTab(),
+                        _securityTab(),
+                        _integrationsTab(),
                       ],
                     ),
                   ),
@@ -169,6 +201,81 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
     for (final key in ['score', 'alerts']) {
       _screening[key] = TextEditingController();
     }
+    for (final key in [
+      'oral_plan',
+      'oral_menu_mode',
+      'enteral_formula',
+      'enteral_volume',
+      'enteral_hours',
+      'enteral_density',
+      'enteral_tolerance',
+      'parenteral_macros',
+      'parenteral_osmolarity',
+      'parenteral_compatibility',
+      'parenteral_electrolytes',
+      'delivery_notes',
+    ]) {
+      _prescription[key] = TextEditingController();
+    }
+    for (final key in [
+      'subjective',
+      'objective',
+      'assessment',
+      'plan',
+      'comparison',
+      'incidents',
+      'multiprofessional_notes',
+    ]) {
+      _evolution[key] = TextEditingController();
+    }
+    for (final key in [
+      'drug_nutrient_interactions',
+      'refeeding_risk',
+      'renal_hepatic_restrictions',
+      'electrolyte_alerts',
+      'protein_alert',
+    ]) {
+      _alerts[key] = TextEditingController();
+    }
+    for (final key in [
+      'patient_evolution',
+      'plan_adherence',
+      'clinical_results',
+      'quality_indicators',
+      'malnutrition_rate',
+      'intervention_time',
+      'audit_notes',
+    ]) {
+      _reports[key] = TextEditingController();
+    }
+    for (final key in [
+      'digital_plan_status',
+      'substitutions',
+      'reminders',
+      'chat_notes',
+      'web_access_notes',
+    ]) {
+      _patientExperience[key] = TextEditingController();
+    }
+    for (final key in [
+      'lgpd_consent',
+      'digital_signature',
+      'access_profile',
+      'backup_status',
+      'audit_log',
+    ]) {
+      _security[key] = TextEditingController();
+    }
+    for (final key in [
+      'hospital_pep',
+      'laboratories',
+      'bioimpedance_devices',
+      'insurance_sus',
+      'finance_schedule',
+      'sync_status',
+    ]) {
+      _integrations[key] = TextEditingController();
+    }
   }
 
   Future<void> _load() async {
@@ -186,14 +293,50 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
       'screening_results',
       widget.patient.id,
     );
+    final prescription = await _repository.getLatest(
+      'diet_prescriptions',
+      widget.patient.id,
+    );
+    final evolution = await _repository.getLatest(
+      'nutritional_evolutions',
+      widget.patient.id,
+    );
+    final alerts = await _repository.getLatest(
+      'intelligent_alerts',
+      widget.patient.id,
+    );
+    final reports = await _repository.getLatest(
+      'clinical_reports',
+      widget.patient.id,
+    );
+    final patientExperience = await _repository.getLatest(
+      'patient_experience_records',
+      widget.patient.id,
+    );
+    final security = await _repository.getLatest(
+      'security_records',
+      widget.patient.id,
+    );
+    final integrations = await _repository.getLatest(
+      'integration_records',
+      widget.patient.id,
+    );
 
     _fill(_clinical, clinical);
     _fill(_anthropometry, anthropometry);
     _fill(_labs, labs);
     _fill(_nutrition, nutrition);
     _fill(_screening, screening);
+    _fill(_prescription, prescription);
+    _fill(_evolution, evolution);
+    _fill(_alerts, alerts);
+    _fill(_reports, reports);
+    _fill(_patientExperience, patientExperience);
+    _fill(_security, security);
+    _fill(_integrations, integrations);
     _formula = (nutrition['formula'] as String?) ?? _formula;
     _protocol = (screening['protocol'] as String?) ?? _protocol;
+    _evolutionModel = (evolution['model'] as String?) ?? _evolutionModel;
 
     if (mounted) {
       setState(() => _loading = false);
@@ -449,6 +592,310 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
     );
   }
 
+  Widget _prescriptionTab() {
+    return _page(
+      _SectionCard(
+        title: 'Prescricao dietetica',
+        subtitle:
+            'Dieta oral, enteral e parenteral com calculos clinicos basicos.',
+        children: [
+          _FieldsGrid(
+            children: [
+              _text(
+                _prescription,
+                'oral_plan',
+                'Dieta oral e cardapio',
+                maxLines: 4,
+              ),
+              _text(
+                _prescription,
+                'oral_menu_mode',
+                'Montagem manual/automatica',
+              ),
+              _text(
+                _prescription,
+                'enteral_formula',
+                'Formula enteral comercial',
+              ),
+              _number(
+                _prescription,
+                'enteral_volume',
+                'Volume enteral (ml/dia)',
+              ),
+              _number(_prescription, 'enteral_hours', 'Tempo de infusao (h)'),
+              _number(_prescription, 'enteral_density', 'Densidade (kcal/ml)'),
+              _text(
+                _prescription,
+                'enteral_tolerance',
+                'Evolucao de tolerancia enteral',
+                maxLines: 4,
+              ),
+              _text(
+                _prescription,
+                'parenteral_macros',
+                'Parenteral: macros detalhados',
+                maxLines: 4,
+              ),
+              _number(
+                _prescription,
+                'parenteral_osmolarity',
+                'Osmolaridade parenteral',
+              ),
+              _text(
+                _prescription,
+                'parenteral_compatibility',
+                'Compatibilidade',
+                maxLines: 4,
+              ),
+              _text(
+                _prescription,
+                'parenteral_electrolytes',
+                'Eletrolitos ajustados',
+                maxLines: 4,
+              ),
+              _text(
+                _prescription,
+                'delivery_notes',
+                'Envio ao paciente: PDF/WhatsApp',
+                maxLines: 4,
+              ),
+            ],
+          ),
+          _saveButton('Salvar prescricao', _savePrescription),
+        ],
+      ),
+    );
+  }
+
+  Widget _evolutionTab() {
+    return _page(
+      _SectionCard(
+        title: 'Evolucao nutricional e prontuario',
+        subtitle: 'Registro diario, comparacoes, intercorrencias e auditoria.',
+        children: [
+          _FieldsGrid(
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: _evolutionModel,
+                decoration: const InputDecoration(labelText: 'Modelo'),
+                items: const [
+                  DropdownMenuItem(value: 'SOAP', child: Text('SOAP')),
+                  DropdownMenuItem(value: 'Livre', child: Text('Livre')),
+                ],
+                onChanged: (value) => setState(() {
+                  _evolutionModel = value ?? _evolutionModel;
+                }),
+              ),
+              _text(_evolution, 'subjective', 'Subjetivo', maxLines: 4),
+              _text(_evolution, 'objective', 'Objetivo', maxLines: 4),
+              _text(_evolution, 'assessment', 'Avaliacao', maxLines: 4),
+              _text(_evolution, 'plan', 'Plano', maxLines: 4),
+              _text(
+                _evolution,
+                'comparison',
+                'Comparacao: peso, exames e ingestao',
+                maxLines: 4,
+              ),
+              _text(_evolution, 'incidents', 'Intercorrencias', maxLines: 4),
+              _text(
+                _evolution,
+                'multiprofessional_notes',
+                'Anotacoes multiprofissionais',
+                maxLines: 4,
+              ),
+            ],
+          ),
+          _saveButton('Salvar evolucao', _saveEvolution),
+        ],
+      ),
+    );
+  }
+
+  Widget _alertsTab() {
+    return _page(
+      _SectionCard(
+        title: 'Alertas clinicos inteligentes',
+        subtitle:
+            'Interacoes, realimentacao, restricoes renal/hepatica e proteina.',
+        children: [
+          _FieldsGrid(
+            children: [
+              _text(
+                _alerts,
+                'drug_nutrient_interactions',
+                'Interacao farmaco-nutriente',
+                maxLines: 4,
+              ),
+              _text(_alerts, 'refeeding_risk', 'Risco de realimentacao'),
+              _text(
+                _alerts,
+                'renal_hepatic_restrictions',
+                'Restricoes renal/hepatica',
+                maxLines: 4,
+              ),
+              _text(
+                _alerts,
+                'electrolyte_alerts',
+                'Alertas de eletrolitos criticos',
+                maxLines: 4,
+              ),
+              _text(
+                _alerts,
+                'protein_alert',
+                'Ingestao proteica inadequada',
+                maxLines: 4,
+              ),
+            ],
+          ),
+          _saveButton('Gerar e salvar alertas', _saveAlerts),
+        ],
+      ),
+    );
+  }
+
+  Widget _reportsTab() {
+    return _page(
+      _SectionCard(
+        title: 'Relatorios e indicadores',
+        subtitle: 'Consultorio, hospital, qualidade e auditorias.',
+        children: [
+          _FieldsGrid(
+            children: [
+              _text(
+                _reports,
+                'patient_evolution',
+                'Evolucao do paciente',
+                maxLines: 4,
+              ),
+              _text(_reports, 'plan_adherence', 'Adesao ao plano'),
+              _text(
+                _reports,
+                'clinical_results',
+                'Resultados clinicos',
+                maxLines: 4,
+              ),
+              _text(
+                _reports,
+                'quality_indicators',
+                'Indicadores de qualidade',
+                maxLines: 4,
+              ),
+              _text(_reports, 'malnutrition_rate', 'Taxa de desnutricao'),
+              _text(
+                _reports,
+                'intervention_time',
+                'Tempo de intervencao nutricional',
+              ),
+              _text(_reports, 'audit_notes', 'Auditorias', maxLines: 4),
+            ],
+          ),
+          _saveButton('Salvar indicadores', _saveReport),
+        ],
+      ),
+    );
+  }
+
+  Widget _patientExperienceTab() {
+    return _page(
+      _SectionCard(
+        title: 'Experiencia do paciente',
+        subtitle: 'Plano digital, substituicoes, lembretes e chat.',
+        children: [
+          _FieldsGrid(
+            children: [
+              _text(
+                _patientExperience,
+                'digital_plan_status',
+                'Status do plano alimentar digital',
+              ),
+              _text(
+                _patientExperience,
+                'substitutions',
+                'Lista de substituicoes',
+                maxLines: 4,
+              ),
+              _text(_patientExperience, 'reminders', 'Lembretes', maxLines: 4),
+              _text(
+                _patientExperience,
+                'chat_notes',
+                'Chat com nutricionista',
+                maxLines: 4,
+              ),
+              _text(
+                _patientExperience,
+                'web_access_notes',
+                'App ou acesso web',
+                maxLines: 4,
+              ),
+            ],
+          ),
+          _saveButton('Salvar experiencia', _savePatientExperience),
+        ],
+      ),
+    );
+  }
+
+  Widget _securityTab() {
+    return _page(
+      _SectionCard(
+        title: 'Seguranca e legislacao',
+        subtitle: 'LGPD, assinatura digital, perfis, backup e auditoria.',
+        children: [
+          _FieldsGrid(
+            children: [
+              _text(_security, 'lgpd_consent', 'Consentimento LGPD'),
+              _text(_security, 'digital_signature', 'Assinatura digital'),
+              _text(_security, 'access_profile', 'Perfil de acesso'),
+              _text(_security, 'backup_status', 'Backup automatico'),
+              _text(
+                _security,
+                'audit_log',
+                'Registro de auditoria',
+                maxLines: 4,
+              ),
+            ],
+          ),
+          _saveButton('Salvar seguranca', _saveSecurity),
+        ],
+      ),
+    );
+  }
+
+  Widget _integrationsTab() {
+    return _page(
+      _SectionCard(
+        title: 'Integracoes',
+        subtitle: 'PEP, laboratorios, equipamentos, convenios, SUS e agenda.',
+        children: [
+          _FieldsGrid(
+            children: [
+              _text(
+                _integrations,
+                'hospital_pep',
+                'Prontuario eletronico hospitalar',
+              ),
+              _text(_integrations, 'laboratories', 'Laboratorios'),
+              _text(
+                _integrations,
+                'bioimpedance_devices',
+                'Equipamentos de bioimpedancia',
+              ),
+              _text(_integrations, 'insurance_sus', 'Convenios / SUS'),
+              _text(_integrations, 'finance_schedule', 'Financeiro e agenda'),
+              _text(
+                _integrations,
+                'sync_status',
+                'Status da integracao',
+                maxLines: 4,
+              ),
+            ],
+          ),
+          _saveButton('Salvar integracoes', _saveIntegrations),
+        ],
+      ),
+    );
+  }
+
   Widget _text(
     Map<String, TextEditingController> controllers,
     String key,
@@ -565,6 +1012,82 @@ class _ClinicalRecordPageState extends State<ClinicalRecordPage> {
     _showMessage(
       'Triagem: ${latest['classification']} | prioridade ${latest['priority']}.',
     );
+  }
+
+  Future<void> _savePrescription() async {
+    await _repository.saveDietPrescription(
+      patientId: widget.patient.id,
+      data: _data(_prescription),
+    );
+    final latest = await _repository.getLatest(
+      'diet_prescriptions',
+      widget.patient.id,
+    );
+    final speed = latest['enteral_speed'];
+    _showMessage(
+      speed == null
+          ? 'Prescricao dietetica salva.'
+          : 'Prescricao salva. Velocidade enteral: ${_formatNumber(speed)} ml/h.',
+    );
+  }
+
+  Future<void> _saveEvolution() async {
+    await _repository.saveEvolution(
+      patientId: widget.patient.id,
+      data: {..._data(_evolution), 'model': _evolutionModel},
+    );
+    _showMessage('Evolucao nutricional registrada.');
+  }
+
+  Future<void> _saveAlerts() async {
+    final generated = await _repository.saveIntelligentAlerts(
+      patient: widget.patient,
+      data: _data(_alerts),
+    );
+    _showMessage(
+      generated.isEmpty
+          ? 'Alertas revisados sem alerta automatico.'
+          : 'Alertas gerados: $generated.',
+    );
+  }
+
+  Future<void> _saveReport() async {
+    await _repository.saveClinicalReport(
+      patientId: widget.patient.id,
+      data: _data(_reports),
+    );
+    _showMessage('Relatorio e indicadores salvos.');
+  }
+
+  Future<void> _savePatientExperience() async {
+    await _repository.savePatientExperience(
+      patientId: widget.patient.id,
+      data: _data(_patientExperience),
+    );
+    _showMessage('Experiencia do paciente salva.');
+  }
+
+  Future<void> _saveSecurity() async {
+    await _repository.saveSecurityRecord(
+      patientId: widget.patient.id,
+      data: _data(_security),
+    );
+    _showMessage('Seguranca, LGPD e auditoria salvos.');
+  }
+
+  Future<void> _saveIntegrations() async {
+    await _repository.saveIntegrationRecord(
+      patientId: widget.patient.id,
+      data: _data(_integrations),
+    );
+    _showMessage('Integracoes registradas.');
+  }
+
+  String _formatNumber(Object value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value.toString()) ?? 0;
+    return number.toStringAsFixed(1);
   }
 
   void _showMessage(String message) {

@@ -146,4 +146,88 @@ void main() {
     expect(screening['classification'], 'Risco nutricional elevado');
     expect(screening['priority'], 'Alta');
   });
+
+  test('persists professional nutrition workflow records', () async {
+    final patientRepository = PatientRepository();
+    final clinicalRepository = ClinicalRepository();
+
+    final patient = await patientRepository.save(
+      PatientModel(
+        id: '',
+        name: 'Beatriz Rocha',
+        age: 70,
+        weight: 54,
+        height: 160,
+        goal: 'Terapia nutricional hospitalar',
+        observations: 'Paciente internada em UTI.',
+        nextVisit: '13/05/2026',
+        createdAt: DateTime(2026, 5),
+      ),
+    );
+
+    await clinicalRepository.saveLabs(
+      patientId: patient.id,
+      data: const {'potassium': 5.9, 'phosphorus': 2.1, 'creatinine': 1.8},
+    );
+    await clinicalRepository.saveNutritionCalculation(
+      patient: patient,
+      data: const {'protein_gkg': 0.8, 'stress_factor': 1.2},
+    );
+    await clinicalRepository.saveDietPrescription(
+      patientId: patient.id,
+      data: const {
+        'oral_plan': 'Dieta oral conforme tolerancia.',
+        'enteral_formula': 'Formula polimerica 1.5 kcal/ml',
+        'enteral_volume': 1200,
+        'enteral_hours': 20,
+        'enteral_density': 1.5,
+        'parenteral_macros': 'Glicose, aminoacidos e lipidios ajustados.',
+      },
+    );
+    final alerts = await clinicalRepository.saveIntelligentAlerts(
+      patient: patient,
+      data: const {
+        'drug_nutrient_interactions': 'Revisar levotiroxina e dieta enteral.',
+        'refeeding_risk': 'alto',
+        'renal_hepatic_restrictions': 'renal',
+      },
+    );
+    await clinicalRepository.saveEvolution(
+      patientId: patient.id,
+      data: const {'model': 'SOAP', 'assessment': 'Melhora parcial.'},
+    );
+    await clinicalRepository.saveSecurityRecord(
+      patientId: patient.id,
+      data: const {'lgpd_consent': 'Consentimento registrado.'},
+    );
+    await clinicalRepository.saveIntegrationRecord(
+      patientId: patient.id,
+      data: const {'hospital_pep': 'PEP pendente de homologacao.'},
+    );
+
+    final prescription = await clinicalRepository.getLatest(
+      'diet_prescriptions',
+      patient.id,
+    );
+    final evolution = await clinicalRepository.getLatest(
+      'nutritional_evolutions',
+      patient.id,
+    );
+    final security = await clinicalRepository.getLatest(
+      'security_records',
+      patient.id,
+    );
+    final integration = await clinicalRepository.getLatest(
+      'integration_records',
+      patient.id,
+    );
+
+    expect(prescription['enteral_speed'], 60);
+    expect(alerts, contains('eletrolito critico'));
+    expect(alerts, contains('alto risco de realimentacao'));
+    expect(alerts, contains('ingestao proteica'));
+    expect(evolution['model'], 'SOAP');
+    expect(security['lgpd_consent'], 'Consentimento registrado.');
+    expect(integration['hospital_pep'], 'PEP pendente de homologacao.');
+  });
 }

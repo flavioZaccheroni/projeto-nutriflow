@@ -21,9 +21,7 @@ class PatientRepository {
   Future<PatientModel> save(PatientModel patient) async {
     final db = await LocalDatabase.database;
     final isNew = patient.id.isEmpty;
-    final id = isNew
-        ? DateTime.now().microsecondsSinceEpoch.toString()
-        : patient.id;
+    final id = isNew ? LocalDatabase.newId() : patient.id;
     final savedPatient = patient.copyWith(id: id);
 
     await db.insert(

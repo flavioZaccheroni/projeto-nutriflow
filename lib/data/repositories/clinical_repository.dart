@@ -156,7 +156,159 @@ class ClinicalRepository {
     );
   }
 
-  String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
+  Future<void> saveDietPrescription({
+    required String patientId,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    final volume = _asDouble(data['enteral_volume']);
+    final hours = _asDouble(data['enteral_hours']);
+    final density = _asDouble(data['enteral_density']);
+    final speed = volume != null && hours != null && hours > 0
+        ? volume / hours
+        : null;
+
+    await db.insert('diet_prescriptions', {
+      'id': _newId(),
+      'patient_id': patientId,
+      ...data,
+      'enteral_speed': speed,
+      'enteral_density': density,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patientId,
+      type: 'diet_prescription_created',
+      description: 'Prescricao dietetica oral, enteral e parenteral salva.',
+    );
+  }
+
+  Future<void> saveEvolution({
+    required String patientId,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    await db.insert('nutritional_evolutions', {
+      'id': _newId(),
+      'patient_id': patientId,
+      ...data,
+      'model': data['model'] ?? 'SOAP',
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patientId,
+      type: 'nutritional_evolution_created',
+      description: 'Evolucao nutricional registrada.',
+    );
+  }
+
+  Future<String> saveIntelligentAlerts({
+    required PatientModel patient,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    final latestLabs = await getLatest('lab_results', patient.id);
+    final latestNutrition = await getLatest(
+      'nutrition_calculations',
+      patient.id,
+    );
+    final generated = _intelligentAlerts(
+      patient,
+      data,
+      latestLabs,
+      latestNutrition,
+    );
+
+    await db.insert('intelligent_alerts', {
+      'id': _newId(),
+      'patient_id': patient.id,
+      ...data,
+      'generated_alerts': generated,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patient.id,
+      type: 'intelligent_alerts_created',
+      description: generated.isEmpty
+          ? 'Alertas clinicos revisados sem alerta automatico.'
+          : 'Alertas clinicos gerados: $generated',
+    );
+    return generated;
+  }
+
+  Future<void> saveClinicalReport({
+    required String patientId,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    await db.insert('clinical_reports', {
+      'id': _newId(),
+      'patient_id': patientId,
+      ...data,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patientId,
+      type: 'clinical_report_created',
+      description: 'Relatorio e indicadores registrados.',
+    );
+  }
+
+  Future<void> savePatientExperience({
+    required String patientId,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    await db.insert('patient_experience_records', {
+      'id': _newId(),
+      'patient_id': patientId,
+      ...data,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patientId,
+      type: 'patient_experience_created',
+      description: 'Experiencia digital do paciente registrada.',
+    );
+  }
+
+  Future<void> saveSecurityRecord({
+    required String patientId,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    await db.insert('security_records', {
+      'id': _newId(),
+      'patient_id': patientId,
+      ...data,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patientId,
+      type: 'security_record_created',
+      description: 'Registro de seguranca, LGPD e auditoria salvo.',
+    );
+  }
+
+  Future<void> saveIntegrationRecord({
+    required String patientId,
+    required Map<String, Object?> data,
+  }) async {
+    final db = await LocalDatabase.database;
+    await db.insert('integration_records', {
+      'id': _newId(),
+      'patient_id': patientId,
+      ...data,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    await _historyRepository.add(
+      patientId: patientId,
+      type: 'integration_record_created',
+      description: 'Mapa de integracoes registrado.',
+    );
+  }
+
+  String _newId() => LocalDatabase.newId();
 
   double _mifflin(PatientModel patient) {
     return (10 * patient.weight) + (6.25 * patient.height) - (5 * patient.age);
@@ -207,5 +359,51 @@ class ClinicalRepository {
       return 'Risco nutricional moderado';
     }
     return 'Baixo risco';
+  }
+
+  String _intelligentAlerts(
+    PatientModel patient,
+    Map<String, Object?> data,
+    Map<String, Object?> labs,
+    Map<String, Object?> nutrition,
+  ) {
+    final alerts = <String>[];
+    final potassium = _asDouble(labs['potassium']);
+    final phosphorus = _asDouble(labs['phosphorus']);
+    final glucose = _asDouble(labs['glucose']);
+    final creatinine = _asDouble(labs['creatinine']);
+    final proteinGkg = _asDouble(nutrition['protein_gkg']);
+    final manualRestrictions = data['renal_hepatic_restrictions']
+        ?.toString()
+        .toLowerCase();
+    final refeedingRisk = data['refeeding_risk']?.toString().toLowerCase();
+    final interactions = data['drug_nutrient_interactions']?.toString();
+
+    if (potassium != null && potassium >= 5.5) {
+      alerts.add('eletrolito critico: potassio elevado');
+    }
+    if (phosphorus != null && phosphorus < 2.5) {
+      alerts.add('risco de sindrome de realimentacao por fosforo baixo');
+    }
+    if (glucose != null && glucose >= 180) {
+      alerts.add('glicemia elevada');
+    }
+    if (creatinine != null && creatinine >= 1.3) {
+      alerts.add('avaliar restricao renal automatica');
+    }
+    if (proteinGkg != null && proteinGkg < 1) {
+      alerts.add('ingestao proteica possivelmente inadequada');
+    }
+    if ((manualRestrictions ?? '').contains('renal')) {
+      alerts.add('restricao renal registrada');
+    }
+    if ((refeedingRisk ?? '').contains('alto')) {
+      alerts.add('alto risco de realimentacao');
+    }
+    if ((interactions ?? '').trim().isNotEmpty) {
+      alerts.add('revisar interacao farmaco-nutriente');
+    }
+
+    return alerts.toSet().join(', ');
   }
 }

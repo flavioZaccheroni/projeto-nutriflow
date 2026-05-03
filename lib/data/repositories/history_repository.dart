@@ -23,7 +23,7 @@ class HistoryRepository {
   }) async {
     final db = await LocalDatabase.database;
     final event = HistoryEventModel(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: LocalDatabase.newId(),
       patientId: patientId,
       mealPlanId: mealPlanId,
       type: type,
